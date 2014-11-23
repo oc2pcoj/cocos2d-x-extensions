@@ -30,15 +30,6 @@ THE SOFTWARE.
 #define kTapMaxDistance 20
 #define kTapMaxDistanceBetweenTaps 20
 
-//this class is used for storing information about the tap gesture
-class CCTap : public cocos2d::CCObject
-{
-public:
-    bool init() {return true;}
-    CREATE_FUNC(CCTap);
-    cocos2d::CCPoint location;
-};
-
 class CCTapGestureRecognizer : public CCGestureRecognizer
 {
 public:
@@ -46,15 +37,16 @@ public:
     ~CCTapGestureRecognizer();
     CREATE_FUNC(CCTapGestureRecognizer);
     
-    virtual bool ccTouchBegan(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
-    virtual void ccTouchMoved(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent){};
-    virtual void ccTouchEnded(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
+    virtual bool onTouchBegan(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
+    virtual void onTouchMoved(cocos2d::Touch * pTouch, cocos2d::Event * pEvent){};
+    virtual void onTouchEnded(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
 protected:
     CC_SYNTHESIZE(unsigned int, numberOfTapsRequired, NumberOfTapsRequired);
 private:
     int taps;
-    cocos2d::CCPoint initialPosition, finalPosition;
-    struct cocos2d::cc_timeval startTime, endTime;
+    cocos2d::Point initialPosition, finalPosition;
+    
+    std::chrono::high_resolution_clock::time_point startTime, endTime;
     
     void stopGestureRecognition();
 };

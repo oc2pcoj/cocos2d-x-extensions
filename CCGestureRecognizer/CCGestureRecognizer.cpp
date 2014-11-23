@@ -28,66 +28,99 @@ CCGestureRecognizer::CCGestureRecognizer()
 {
     isRecognizing = false;
     
-    dispatcher = CCDirector::sharedDirector()->getTouchDispatcher();
+    dispatcher = Director::getInstance()->getEventDispatcher();
     
-    setTouchEnabled(true);
+    auto listener = EventListenerTouchOneByOne::create();
+    listener->onTouchBegan = CC_CALLBACK_2(CCGestureRecognizer::onTouchBegan, this);
+    listener->onTouchMoved = CC_CALLBACK_2(CCGestureRecognizer::onTouchMoved, this);
+    listener->onTouchEnded = CC_CALLBACK_2(CCGestureRecognizer::onTouchEnded, this);
+    dispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+    
     setCancelsTouchesInView(false);
 }
 
 CCGestureRecognizer::~CCGestureRecognizer()
 {
-    dispatcher->removeDelegate(this);
+    
 }
 
-void CCGestureRecognizer::setTarget(CCObject * tar, SEL_CallFuncO sel)
+void CCGestureRecognizer::setTarget(Ref * tar, SEL_CallFuncGR sel)
 {
     target = tar;
     selector = sel;
 }
 
-float CCGestureRecognizer::distanceBetweenPoints(CCPoint p1, CCPoint p2)
+void CCGestureRecognizer::setTarget(const std::function<void(CCGesture *)> &callback)
 {
-    float deltaX = p2.x-p1.x;
-    float deltaY = p2.y-p1.y;
-    return fabs(sqrtf(deltaX*deltaX+deltaY*deltaY));
+    this->callback = callback;
 }
 
-void CCGestureRecognizer::stopTouchesPropagation(CCSet * pTouches, CCEvent * pEvent)
+void CCGestureRecognizer::setTargetForBegan(Ref * tar, SEL_CallFuncGR sel)
 {
-    //hack! cancel touch so it won't propagate
-    dispatcher->touchesCancelled(pTouches, pEvent);
+    targetForBegan = tar;
+    selectorForBegan = sel;
 }
 
-void CCGestureRecognizer::setParent(CCNode*p)
+void CCGestureRecognizer::setTargetForBegan(const std::function<void(CCGesture *)> &callback)
 {
-    CCLayer::setParent(p);
+    this->callbackForBegan = callback;
+}
+
+void CCGestureRecognizer::setTargetForEnded(Ref * tar, SEL_CallFuncGR sel)
+{
+    targetForEnded = tar;
+    selectorForEnded = sel;
+}
+
+void CCGestureRecognizer::setTargetForEnded(const std::function<void(CCGesture *)> &callback)
+{
+    this->callbackForEnded = callback;
+}
+
+float CCGestureRecognizer::distanceBetweenPoints(Point p1, Point p2)
+{
+    return p2.getDistance(p1);
+}
+
+
+void CCGestureRecognizer::stopTouchesPropagation(Event * pEvent)
+{
+    pEvent->stopPropagation();
+}
+
+void CCGestureRecognizer::setParent(Node*p)
+{
+    Layer::setParent(p);
     
     if (p!=NULL) {
-        CCSize size = p->getContentSize();
+        Size size = p->getContentSize();
         setContentSize(size);
         setPosition(p->getPosition());
-        frame = p->boundingBox();
+        frame = Rect(0, 0, size.width, size.height);
+        CCLOG("x pos is %f y pos is %f, w %f and h %f", frame.origin.x, frame.origin.y, frame.size.width, frame.size.height);
     }
 }
 
-CCSet * CCGestureRecognizer::createSetWithTouch(CCTouch * pTouch)
-{
-    CCSet * set = new CCSet();
-    set->addObject(pTouch);
-    return set;
-}
-
-void CCGestureRecognizer::registerWithTouchDispatcher()
-{
-    dispatcher->addTargetedDelegate(this, -256, false);
-}
-
-bool CCGestureRecognizer::isPositionBetweenBounds(CCPoint pos)
+bool CCGestureRecognizer::isPositionBetweenBounds(Point pos)
 {
     return frame.containsPoint(pos);
 }
 
-void CCGestureRecognizer::gestureRecognized(cocos2d::CCObject * gesture)
+void CCGestureRecognizer::gestureRecognized(CCGesture * gesture)
 {
-    if (target && selector) (target->*selector)(gesture); //call selector
+    CCLOG ("RECONGNIZED");
+    if (callback) callback(gesture);
+    else if (target && selector) (target->*selector)(gesture); //call selector
+}
+
+void CCGestureRecognizer::gestureBegan(CCGesture * gesture)
+{
+    if (callbackForBegan) callbackForBegan(gesture);
+    else if (targetForBegan && selectorForBegan) (targetForBegan->*selectorForBegan)(gesture); //call selector
+}
+
+void CCGestureRecognizer::gestureEnded(CCGesture * gesture)
+{
+    if (callbackForEnded) callbackForEnded(gesture);
+    else if (targetForEnded && selectorForEnded) (targetForEnded->*selectorForEnded)(gesture); //call selector
 }

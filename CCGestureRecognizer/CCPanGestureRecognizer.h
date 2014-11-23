@@ -26,13 +26,11 @@ THE SOFTWARE.
 #include "CCGestureRecognizer.h"
 
 //this class is used for storing information about the pan gesture
-class CCPan : public cocos2d::CCObject
+class CCPan : public CCGesture
 {
 public:
-    bool init() {return true;}
     CREATE_FUNC(CCPan);
-    cocos2d::CCPoint location;
-    cocos2d::CCPoint delta;
+    cocos2d::Point delta;
 };
 
 class CCPanGestureRecognizer : public CCGestureRecognizer
@@ -42,9 +40,9 @@ public:
     ~CCPanGestureRecognizer();
     CREATE_FUNC(CCPanGestureRecognizer);
     
-    virtual bool ccTouchBegan(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
-    virtual void ccTouchMoved(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
-    virtual void ccTouchEnded(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
+    virtual bool onTouchBegan(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
+    virtual void onTouchMoved(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
+    virtual void onTouchEnded(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
 };
 
 #endif

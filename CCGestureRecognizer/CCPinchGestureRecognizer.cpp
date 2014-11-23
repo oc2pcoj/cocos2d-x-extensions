@@ -29,25 +29,24 @@ bool CCPinchGestureRecognizer::init()
     touchNumber = 0;
     lastDistance = 0;
     
-    touches = CCArray::create();
-    touches->retain();
+    touches = new std::vector<Touch*>();
     
     return true;
 }
 
 CCPinchGestureRecognizer::~CCPinchGestureRecognizer()
 {
-    touches->release();
+    delete touches;
 }
 
-bool CCPinchGestureRecognizer::ccTouchBegan(CCTouch * pTouch, CCEvent * pEvent)
+bool CCPinchGestureRecognizer::onTouchBegan(Touch * pTouch, Event * pEvent)
 {
     if (isRecognizing || !isPositionBetweenBounds(pTouch->getLocation())) {
         return false;
     }
     
     touchNumber++;
-    touches->addObject(pTouch);
+    touches->push_back(pTouch);
     
     //start recognizing after that 2 fingers are touching
     if (touchNumber==2) {
@@ -57,16 +56,16 @@ bool CCPinchGestureRecognizer::ccTouchBegan(CCTouch * pTouch, CCEvent * pEvent)
     return true;
 }
 
-void CCPinchGestureRecognizer::ccTouchMoved(CCTouch * pTouch, CCEvent * pEvent)
+void CCPinchGestureRecognizer::onTouchMoved(Touch * pTouch, Event * pEvent)
 {
     if (!isRecognizing) {
         return;
     }
     
-    CCTouch * touch1 = (CCTouch*)touches->objectAtIndex(0);
-    CCTouch * touch2 = (CCTouch*)touches->objectAtIndex(1);
-    CCPoint delta1 = touch1->getDelta();
-    CCPoint delta2 = touch2->getDelta();
+    Touch * touch1 = (Touch*)touches->at(0);
+    Touch * touch2 = (Touch*)touches->at(1);
+    Point delta1 = touch1->getDelta();
+    Point delta2 = touch2->getDelta();
     
     if ((fabs(delta1.x)<kPinchThreshold && fabs(delta1.y)<kPinchThreshold) || (fabs(delta2.x)<kPinchThreshold && fabs(delta2.y)<kPinchThreshold)) {
         return;
@@ -93,15 +92,15 @@ void CCPinchGestureRecognizer::ccTouchMoved(CCTouch * pTouch, CCEvent * pEvent)
     }
 }
 
-void CCPinchGestureRecognizer::ccTouchEnded(CCTouch * pTouch, CCEvent * pEvent)
+void CCPinchGestureRecognizer::onTouchEnded(Touch * pTouch, Event * pEvent)
 {
     isRecognizing = false;
     lastDistance = 0;
     touchNumber--;
-    touches->removeObject(pTouch);
+    //touches(pTouch);
     
     //cancel touch over other views if necessary
     if (cancelsTouchesInView) {
-        stopTouchesPropagation(createSetWithTouch(pTouch), pEvent);
+        //stopTouchesPropagation(createSetWithTouch(pTouch), pEvent);
     }
 }

@@ -34,21 +34,27 @@ CCPanGestureRecognizer::~CCPanGestureRecognizer()
     
 }
 
-bool CCPanGestureRecognizer::ccTouchBegan(CCTouch * pTouch, CCEvent * pEvent)
+bool CCPanGestureRecognizer::onTouchBegan(Touch * pTouch, Event * pEvent)
 {
     if (isRecognizing) {
         isRecognizing = false;
         return false;
     }
     
-    CCPoint loc = pTouch->getLocation();
+    Point loc = pTouch->getLocation();
     if (!isPositionBetweenBounds(loc)) return false;
     
     isRecognizing = true;
+    
+    CCPan * pan = CCPan::create();
+    pan->location = pTouch->getLocation();
+    pan->delta = Point(0,0);
+    
+    gestureBegan(pan);
     return true;
 }
 
-void CCPanGestureRecognizer::ccTouchMoved(CCTouch * pTouch, CCEvent * pEvent)
+void CCPanGestureRecognizer::onTouchMoved(Touch * pTouch, Event * pEvent)
 {
     CCPan * pan = CCPan::create();
     pan->location = pTouch->getLocation();
@@ -56,12 +62,19 @@ void CCPanGestureRecognizer::ccTouchMoved(CCTouch * pTouch, CCEvent * pEvent)
     gestureRecognized(pan);
 }
 
-void CCPanGestureRecognizer::ccTouchEnded(CCTouch * pTouch, CCEvent * pEvent)
+void CCPanGestureRecognizer::onTouchEnded(Touch * pTouch, Event * pEvent)
 {
+    CCPan * pan = CCPan::create();
+    pan->location = pTouch->getLocation();
+    pan->delta = pTouch->getDelta();
+    pan->cancelPropagation = cancelsTouchesInView;
+    
+    gestureEnded(pan);
+    
     isRecognizing = false;
     
     //cancel touch over other views if necessary
-    if (cancelsTouchesInView) {
-        stopTouchesPropagation(createSetWithTouch(pTouch), pEvent);
+    if (pan->cancelPropagation) {
+        stopTouchesPropagation(pEvent);
     }
 }

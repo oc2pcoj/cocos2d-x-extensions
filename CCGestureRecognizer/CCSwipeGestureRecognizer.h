@@ -24,6 +24,7 @@ THE SOFTWARE.
 #define CCSwipeGestureRecognizer_h
 
 #include "CCGestureRecognizer.h"
+#include <chrono>
 
 #define kSwipeMaxDuration 300
 #define kSwipeMinDistance 60
@@ -36,13 +37,11 @@ typedef enum {
 } CCSwipeGestureRecognizerDirection;
 
 //this class is used for storing information about the swipe gesture
-class CCSwipe : public cocos2d::CCObject
+class CCSwipe : public CCGesture
 {
 public:
-    bool init() {return true;}
     CREATE_FUNC(CCSwipe);
     CCSwipeGestureRecognizerDirection direction;
-    cocos2d::CCPoint location;
 };
 
 class CCSwipeGestureRecognizer : public CCGestureRecognizer
@@ -52,16 +51,17 @@ public:
     ~CCSwipeGestureRecognizer();
     CREATE_FUNC(CCSwipeGestureRecognizer);
     
-    virtual bool ccTouchBegan(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
-    virtual void ccTouchMoved(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent){};
-    virtual void ccTouchEnded(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
+    virtual bool onTouchBegan(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
+    virtual void onTouchMoved(cocos2d::Touch * pTouch, cocos2d::Event * pEvent){};
+    virtual void onTouchEnded(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
 protected:
     CC_SYNTHESIZE(int, direction, Direction);
-private:
-    cocos2d::CCPoint initialPosition;
-    struct cocos2d::cc_timeval startTime;
     
-    bool checkSwipeDirection(cocos2d::CCPoint p1, cocos2d::CCPoint p2, int & dir);
+private:
+    cocos2d::Point initialPosition;
+    //struct cocos2d::cc_timeval startTime;
+    std::chrono::high_resolution_clock::time_point startTime;
+    bool checkSwipeDirection(cocos2d::Point p1, cocos2d::Point p2, int & dir);
 };
 
 #endif

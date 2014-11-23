@@ -40,37 +40,42 @@ CCLongPressGestureRecognizer::~CCLongPressGestureRecognizer()
     
 }
 
-void CCLongPressGestureRecognizer::timerDidEnd(float dt)
-{
-    CCLongPress * longPress = CCLongPress::create();
-    longPress->location = currLocation;
-    
-    gestureRecognized(longPress);
-    if (cancelsTouchesInView) stopTouchesPropagation(createSetWithTouch(currTouch), currEvent); //cancel touch over other views
-    
-    stopGestureRecognition();
-}
-
-bool CCLongPressGestureRecognizer::ccTouchBegan(CCTouch * pTouch, CCEvent * pEvent)
+bool CCLongPressGestureRecognizer::onTouchBegan(Touch * pTouch, Event * pEvent)
 {
     if (isRecognizing) {
         stopGestureRecognition();
         return false;
     }
     
-    currLocation = pTouch->getLocation();
-    if (!isPositionBetweenBounds(currLocation)) return false;
+    origLocation = currLocation = pTouch->getLocation();
+    // CCLOG("x pos is %f y pos is %f", origLocation.x, origLocation.y);
+    // if (!isPositionBetweenBounds(origLocation)) return false;
+    auto target = dynamic_cast<Node *>(pEvent->getCurrentTarget());
     
+    Point locationInNode = target->convertToNodeSpace(pTouch->getLocation());
+    Size s = target->getContentSize();
+    Rect rect = Rect(0, 0, s.width, s.height);
+
+    if (!rect.containsPoint(locationInNode))
+    {
+      return false;
+    }
+
     currEvent = pEvent;
     currTouch = pTouch;
     
-    schedule(schedule_selector(CCLongPressGestureRecognizer::timerDidEnd), minimumPressDuration);
+    schedule(schedule_selector(CCLongPressGestureRecognizer::timerDidEnd), minimumPressDuration, 1, false);
     
     isRecognizing = true;
     return true;
 }
 
-void CCLongPressGestureRecognizer::ccTouchEnded(CCTouch * pTouch, CCEvent * pEvent)
+void CCLongPressGestureRecognizer::onTouchMoved(cocos2d::Touch *pTouch, cocos2d::Event *pEvent)
+{
+    currLocation = pTouch->getLocation();
+}
+
+void CCLongPressGestureRecognizer::onTouchEnded(Touch * pTouch, Event * pEvent)
 {
     stopGestureRecognition();
 }
@@ -83,4 +88,24 @@ void CCLongPressGestureRecognizer::stopGestureRecognition()
     currEvent = NULL;
     unschedule(schedule_selector(CCLongPressGestureRecognizer::timerDidEnd));
     isRecognizing = false;
+}
+
+void CCLongPressGestureRecognizer::timerDidEnd(float dt)
+{
+    // check if the current touch is near the original touch
+    float distance = currLocation.getDistance(origLocation);
+    if (distance > kLongPressDistanceTolerance) {
+        stopGestureRecognition();
+        return;
+    }
+    
+    CCGesture * longPress = CCGesture::create();
+    longPress->location = currLocation;
+    longPress->cancelPropagation = cancelsTouchesInView;
+    
+    gestureRecognized(longPress);
+    //if (longPress->cancelPropagation) stopTouchesPropagation(currEvent); //cancel touch over other views
+    CCLOG("Cancel touched other views 2");
+    stopGestureRecognition();
+    CCLOG("Cancel touched other views 3");
 }

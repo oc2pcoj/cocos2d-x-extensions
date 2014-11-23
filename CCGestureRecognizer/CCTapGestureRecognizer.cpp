@@ -36,7 +36,7 @@ CCTapGestureRecognizer::~CCTapGestureRecognizer()
     
 }
 
-bool CCTapGestureRecognizer::ccTouchBegan(CCTouch * pTouch, CCEvent * pEvent)
+bool CCTapGestureRecognizer::onTouchBegan(Touch * pTouch, Event * pEvent)
 {
     if (isRecognizing && taps==0) {
         stopGestureRecognition();
@@ -47,11 +47,11 @@ bool CCTapGestureRecognizer::ccTouchBegan(CCTouch * pTouch, CCEvent * pEvent)
     
     if (!isPositionBetweenBounds(initialPosition)) return false;
     
-    CCTime::gettimeofdayCocos2d(&startTime, NULL);
+    startTime = getCurrentTime();
     
     if (taps>0 && taps<numberOfTapsRequired) {
         float distance = distanceBetweenPoints(finalPosition, initialPosition); //distance between taps
-        double duration = CCTime::timersubCocos2d(&endTime, &startTime); //duration between taps
+        double duration = getTimeDifference(startTime, endTime); //duration between taps
         if (duration>kTapMaxDurationBetweenTaps || distance>kTapMaxDistanceBetweenTaps) {
             stopGestureRecognition();
         }
@@ -61,11 +61,11 @@ bool CCTapGestureRecognizer::ccTouchBegan(CCTouch * pTouch, CCEvent * pEvent)
     return true;
 }
 
-void CCTapGestureRecognizer::ccTouchEnded(CCTouch * pTouch, CCEvent * pEvent)
+void CCTapGestureRecognizer::onTouchEnded(Touch * pTouch, Event * pEvent)
 {
     //calculate duration
-    CCTime::gettimeofdayCocos2d(&endTime, NULL);
-    double duration = CCTime::timersubCocos2d(&startTime, &endTime); //duration of tap in milliseconds
+    endTime = getCurrentTime();
+    double duration = getTimeDifference(endTime, startTime); //duration of tap in milliseconds
     
     //calculate distance
     finalPosition = pTouch->getLocation();
@@ -75,11 +75,12 @@ void CCTapGestureRecognizer::ccTouchEnded(CCTouch * pTouch, CCEvent * pEvent)
     if (duration<=kTapMaxDuration && distance<=kTapMaxDistance) {
         taps++;
         if (taps==numberOfTapsRequired) {
-            CCTap * tap = CCTap::create();
+            CCGesture * tap = CCGesture::create();
             tap->location = initialPosition;
+            tap->cancelPropagation = cancelsTouchesInView;
             
             gestureRecognized(tap);
-            if (cancelsTouchesInView) stopTouchesPropagation(createSetWithTouch(pTouch), pEvent); //cancel touch over other views
+            if (tap->cancelPropagation) stopTouchesPropagation(pEvent); //cancel touch over other views
             stopGestureRecognition();
         }
     }

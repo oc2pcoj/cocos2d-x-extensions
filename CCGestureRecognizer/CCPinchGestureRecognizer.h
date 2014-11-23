@@ -24,6 +24,7 @@ THE SOFTWARE.
 #define CCPinchGestureRecognizer_h
 
 #include "CCGestureRecognizer.h"
+#include <vector>
 
 #define kPinchThreshold 2.0
 
@@ -33,7 +34,7 @@ typedef enum {
 } CCPinchGestureRecognizerType;
 
 //this class is used for storing information about the pinch gesture
-class CCPinch : public cocos2d::CCObject
+class CCPinch : public CCGesture
 {
 public:
     bool init() {return true;}
@@ -48,13 +49,13 @@ public:
     ~CCPinchGestureRecognizer();
     CREATE_FUNC(CCPinchGestureRecognizer);
     
-    virtual bool ccTouchBegan(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
-    virtual void ccTouchMoved(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
-    virtual void ccTouchEnded(cocos2d::CCTouch * pTouch, cocos2d::CCEvent * pEvent);
+    virtual bool onTouchBegan(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
+    virtual void onTouchMoved(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
+    virtual void onTouchEnded(cocos2d::Touch * pTouch, cocos2d::Event * pEvent);
 private:
     int touchNumber;
     float lastDistance;
-    cocos2d::CCArray * touches;
+    std::vector<cocos2d::Touch*> * touches;
 };
 
 #endif
